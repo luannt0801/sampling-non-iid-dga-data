@@ -44,52 +44,56 @@ def save_dataframe():
     
     return my_df
 
-# def sampling_noniid_data(df, fraction_list, num_labels, n):
+# def sampling_noniid_data(df, fraction_list, n):
 #     label_data_list = []
-
 #     num_samples_total = len(df)
-#     num_samples_per_label = int(fraction * num_samples_total / num_labels)
 
-#     # random_labels = random.sample(df['type'].unique(), n)
 #     random_labels = random.sample(df['type'].unique().tolist(), n)
 
-#     print("random label: ", random_labels)
-#     # for label_name in df['type'].unique():
 #     for label_name in random_labels:
-#         print("Cac label: ", label_name)
 #         label_df = df[df['type'] == label_name]
-
+#         num_samples_per_label = len(label_df)
+       
 #         fraction = random.choice(fraction_list)
-#         num_samples_per_label = int(fraction * num_samples_total / num_labels)
         
-#         label_data = label_df.sample(n=num_samples_per_label, replace=True, random_state=0)
+#         num_samples_to_select = int(fraction * num_samples_per_label)
+        
+#         if num_samples_to_select > num_samples_per_label:
+#             num_samples_to_select = num_samples_per_label
+        
+#         label_data = label_df.sample(n=num_samples_to_select, replace=False)
 #         label_data_list.append(label_data)
+
 #     final_df = pd.concat(label_data_list)
 #     return final_df, fraction
 
-def sampling_noniid_data(df, fraction_list, num_labels, n):
+def sampling_noniid_data(df, fraction_list, n):
     label_data_list = []
-
     num_samples_total = len(df)
 
-    # random_labels = random.sample(df['type'].unique(), n)
     random_labels = random.sample(df['type'].unique().tolist(), n)
 
-    print("random label: ", random_labels)
-    # for label_name in df['type'].unique():
     for label_name in random_labels:
-        print("Cac label: ", label_name)
         label_df = df[df['type'] == label_name]
         
-        # Chọn ngẫu nhiên một tỉ lệ lấy mẫu từ danh sách các tỉ lệ
+        if label_name == 'benign':
+            # Tính toán số lượng mẫu của nhãn 'benign' bằng 30% của số lượng mẫu của tổng số nhãn còn lại
+            num_samples_per_label = int(0.3 * (num_samples_total - len(label_df)))
+        else:
+            num_samples_per_label = len(label_df)
+       
         fraction = random.choice(fraction_list)
-        num_samples_per_label = int(fraction * num_samples_total / num_labels)
         
-        label_data = label_df.sample(n=num_samples_per_label, replace=True, random_state=0)
+        num_samples_to_select = int(fraction * num_samples_per_label)
+        
+        if num_samples_to_select > num_samples_per_label:
+            num_samples_to_select = num_samples_per_label
+        
+        label_data = label_df.sample(n=num_samples_to_select, replace=False)
         label_data_list.append(label_data)
-    final_df = pd.concat(label_data_list)
-    return final_df, fraction  # Trả về cả giá trị fraction đã chọn
 
+    final_df = pd.concat(label_data_list)
+    return final_df, fraction
 
 if __name__ == "__main__":
     data_raw_frame = save_dataframe()
@@ -117,16 +121,16 @@ if __name__ == "__main__":
     # print(random_labels)
 
     fraction_list = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-    number_label_different = 3
     num_labels = 6
 
-    for i in range(1, 10):  # Lặp lại 9 lần
-        noniid_dataframe, fraction = sampling_noniid_data(data_raw_frame, fraction_list, number_label_different, num_labels)
+    for i in range(1,10):  # Lặp lại 9 lần
+        # noniid_dataframe, fraction = sampling_noniid_data(data_raw_frame, fraction_list, number_label_different, num_labels)
+        noniid_dataframe, fraction = sampling_noniid_data(data_raw_frame, fraction_list, num_labels)
         print(noniid_dataframe)
         noniid_count = noniid_dataframe.groupby('type').size()
         print("\nSố lượng mẫu của từng nhãn:")
         print(noniid_count)
-        text_file_path = f"non_iid_data_{i}_{fraction}.txt"  # Tạo tên file với số thứ tự từ 1 đến 9
+        text_file_path = f"non_iid_data_{i}.txt"  # Tạo tên file với số thứ tự từ 1 đến 9
         noniid_dataframe.to_csv(text_file_path, sep='\t', index=False)
         
         print(f"DataFrame saved to text file {text_file_path} successfully!")
